@@ -1,0 +1,41 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
+#read csv
+df = pd.read_csv("world food production.csv")
+df.columns = df.columns.str.strip().str.replace(r'\s+', ' ', regex=True)
+
+#selecting the countries
+selected_entities = ['Afghanistan', 'Argentina', 'Taiwan', 'China', 'Spain',
+                     'Japan', 'Canada', 'United States']
+
+#filtering the dataframe per country and year
+filtered_df = df[(df['Entity'].isin(selected_entities)) &
+                 (df['Year'] >= 2015) & (df['Year'] <= 2023)]
+
+crop_columns = filtered_df.columns.difference(['Entity', 'Year'])
+production_sums = filtered_df.groupby('Entity')[crop_columns].sum().sum(axis=1)
+
+colors = plt.cm.tab20(range(len(production_sums)))
+
+#plotting the pie chart
+fig, ax = plt.subplots(figsize=(7, 5))
+wedges, texts, autotexts = ax.pie(
+    production_sums,
+    autopct='%1.1f%%',
+    startangle=140,
+    colors=colors,
+    pctdistance=0.8,
+    textprops={'fontsize': 9, 'color': 'black'},
+    wedgeprops={'edgecolor': 'black', 'linewidth': 0.5}
+)
+
+#plotting the legend
+ax.legend(wedges, production_sums.index, title="Country", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1), fontsize=9,frameon=False)
+
+plt.setp(autotexts, size=8)
+ax.axis('equal')
+plt.title('Total Crop Production by Country (2015–2023)', fontsize=12, pad=15)
+plt.tight_layout(rect=[0, 0, 0.85, 1])
+plt.show()
