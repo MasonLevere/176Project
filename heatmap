@@ -1,0 +1,27 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Heatmap of Average Temperature vs Crop Yield 2015-2023
+
+df = pd.read_csv("climate_change_impact_on_agriculture_2024.csv")
+
+df_recent = df[(df['Year'] >= 2015) & (df['Year'] <= 2023)]
+
+# Bin temperature and crop yield data into 10 categories
+temp_bins = pd.cut(df['Average_Temperature_C'], bins=10)
+yield_bins = pd.cut(df['Crop_Yield_MT_per_HA'], bins=10)
+
+# Pivot table (cross-tabulation)
+heatmap_data = pd.crosstab(temp_bins, yield_bins)
+
+plt.figure(figsize=(12, 8))
+sns.heatmap(heatmap_data, cmap="YlGnBu", annot=True, fmt="d", linewidths=.5)
+plt.title("Heatmap of Average Temperature vs Crop Yield 2015-2023")
+plt.xlabel("Crop Yield (MT per HA)")
+plt.ylabel("Average Temperature (°C)")
+plt.xticks(rotation=45)
+plt.yticks(rotation=0)
+plt.tight_layout()
+plt.show()
