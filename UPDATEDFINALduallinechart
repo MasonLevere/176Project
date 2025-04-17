@@ -1,0 +1,29 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#upload csv
+df = pd.read_csv("WLD_RTFP_country_2023-10-02.csv")
+df['Inflation'].fillna(0, inplace=True)
+
+#convert date to datetime
+df['date'] = pd.to_datetime(df['date'])
+
+#create filtered dataframe from 2015 - 2023
+df_filtered = df[(df['date'].dt.year >= 2015) & (df['date'].dt.year <= 2023)]
+latest_per_year = (df_filtered.sort_values('date').groupby(df_filtered['date'].dt.year, as_index=False).last())
+
+#calculate percentage change of prices
+latest_per_year['Price_Change'] = latest_per_year['High'].pct_change() * 100
+latest_per_year.fillna(0, inplace=True)
+
+#plotting Inflation vs Price Change (2015–2023, Latest per Year)
+plt.figure()
+plt.plot(latest_per_year['date'], latest_per_year['Inflation'], label='Inflation', color='red', marker='o')
+plt.plot(latest_per_year['date'], latest_per_year['Price_Change'], label='Price Change (%)', color='blue', marker='o')
+plt.xlabel('Date')
+plt.ylabel('Value / Change (%)')
+plt.title('Inflation vs Price Change (2015–2023, Latest per Year)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
