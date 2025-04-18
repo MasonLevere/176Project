@@ -1,0 +1,20 @@
+import pandas as pd
+
+#filtered for selected countries
+selected_countries = ['China', 'India', 'United States', 'Afghanistan', 'Pakistan']
+df_filtered = df24[df24['Entity'].isin(selected_countries)]
+
+#created pivot table
+pivot_df = df_filtered.pivot_table(
+    index='Year',
+    columns='Entity',
+    values=['Population', 'Total Food']
+)
+
+#made columns more readable
+pivot_df.columns = [f'{value}_{country}' for value, country in pivot_df.columns]
+pivot_df.reset_index(inplace=True)
+
+#output to test if cleaner/readable
+print("Pivoted DataFrame:\n", pivot_df.head())
+print("\nStacked DataFrame:\n", stacked_df.head())
