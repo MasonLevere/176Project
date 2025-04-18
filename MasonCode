@@ -26,7 +26,7 @@ print('The amount of rows with no value in the fourth dataset is:', len(rows_wit
 
 
 
-# since df1 has NaN, we first deal with sorting
+# cleaning
 df1['Inflation'] = df1.groupby('country')['Inflation'].transform(
     lambda group: group.interpolate(method='linear', limit_direction='backward')
 )
@@ -89,7 +89,6 @@ ax.set_title('Food Produced per Person Over Time', fontsize=14, fontweight='bold
 ax.grid(True, linestyle='--', alpha=0.6)
 ax.tick_params(axis='x', rotation=45)
 ax.tick_params(axis='both', labelsize=10)
-
 
 fig.legend(bbox_to_anchor=(1.15, 0.6))
 
