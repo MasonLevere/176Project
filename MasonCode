@@ -3,92 +3,94 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-# Data cleaning, sorting, and merging
+# Data cleaning, sorting, and merging of df1, df2, and df3
 df1 = pd.read_csv('WLD_RTFP_country_2023-10-02.csv')
+df2 = pd.read_csv('world food production.csv')
+df3 = pd.read_csv('climate_change_impact_on_agriculture_2024.csv')
+df4 = pd.read_csv('population.csv')
 
+# changing date to datetime for sorting
 df1['date'] = pd.to_datetime(df1['date'])
 df1.sort_values(by=['country', 'date'], inplace=True)
 
+#checking how many rows dont have NaN
+rows_with_nan1 = df1[df1.isna().any(axis=1)]
+rows_with_nan2 = df2[df2.isna().any(axis=1)]
+rows_with_nan3 = df3[df3.isna().any(axis=1)]
+rows_with_nan4 = df4[df4.isna().any(axis=1)]
 
+print('The amount of rows with no value in the first dataset is:', len(rows_with_nan1))
+print('The amount of rows with no value in the second dataset is:', len(rows_with_nan2))
+print('The amount of rows with no value in the third dataset is:', len(rows_with_nan3))
+print('The amount of rows with no value in the fourth dataset is:', len(rows_with_nan4))
+
+
+
+# since df1 has NaN, we first deal with sorting
 df1['Inflation'] = df1.groupby('country')['Inflation'].transform(
     lambda group: group.interpolate(method='linear', limit_direction='backward')
 )
 
 df1.dropna(inplace = True)
 
-rows_with_nan = df1[df1.isna().any(axis=1)]
 
-df1
-############################
-df2 = pd.read_csv('world food production.csv')
-rows_with_nan = df2[df2.isna().any(axis=1)]
+#dropping any duplicate rows in all data sets
+df1.drop_duplicates(inplace=True)
+df2.drop_duplicates(inplace=True)
+df3.drop_duplicates(inplace=True)
 
-print('The amount of rows with no value in a column is:', len(rows_with_nan))
+
+# cutting data from the second set to merge onto the 4th
+
 df2 = df2[df2['Year'] > 1990]
 ###################################
 
-df3 = pd.read_csv('climate_change_impact_on_agriculture_2024.csv')
-
+# sorting df3 so that we can compare countries across different crops over time
 df3.sort_values(by=['Country', 'Year', 'Crop_Type'], inplace=True)
 
 
-rows_with_nan = df3[df3.isna().any(axis=1)]
-df3.drop_duplicates(inplace=True)
+# sorting data to fit within our time range
 
 df3 = df3[df3['Year'] < 2021]
 df2['Total Food'] = df2.iloc[:, 2:].sum(axis=1)
 
 ####################################################
 
-df4 = pd.read_csv('population.csv')
+# cutting data from 4th to be able to merge onto 2nd
+
 df4 = df4[df4['Year'] > 1990]
 df4 = df4.rename(columns={'all years' : 'Population'})
-
+# merging
 df24 = pd.merge(df2, df4[['Entity', 'Year', 'Population']], on = ['Entity', 'Year'], how = 'left')
+# creating new metrics so that we can compare countries by food produced per person, eliminates bias in countries with already large population
+df24['Food per Person'] = df24['Total Food']/df24['Population']
 
+# seperating data by country
 
-
-# Graph 1 Code
 China = df24[df24['Entity'] == 'China']
 India = df24[df24['Entity'] == 'India']
 United_States = df24[df24['Entity'] == 'United States']
 Afghanistan = df24[df24['Entity'] == 'Afghanistan']
 Pakistan = df24[df24['Entity'] == 'Pakistan']
 
+# plotting the data across 5 different countries
+fig, ax = plt.subplots(figsize=(10, 6)) 
 
-fig, ax1 = plt.subplots(figsize=(10, 6)) 
+ax.plot(China['Year'], China['Food per Person'], label='China', color='blue', linewidth=2)
+ax.plot(India['Year'], India['Food per Person'], label='India', color='red', linewidth=2)
+ax.plot(United_States['Year'], United_States['Food per Person'], label='USA', color='green', linewidth=2)
+ax.plot(Afghanistan['Year'], Afghanistan['Food per Person'], label='Afghanistan', color='purple', linewidth=2)
+ax.plot(Pakistan['Year'], Pakistan['Food per Person'], label='Pakistan', color='gold', linewidth=2)
 
-ax1.plot(China['Year'], China['Population'] / 1e9, color='blue', label='China Population', linewidth=2)
-ax1.plot(India['Year'], India['Population'] / 1e9, color='red', label='India Population', linewidth=2)
-ax1.plot(United_States['Year'], United_States['Population'] / 1e9, color='green', label='USA Population', linewidth=2)
-ax1.plot(Afghanistan['Year'], Afghanistan['Population'] / 1e9, color='purple', label='Afghanistan Population', linewidth=2)
+ax.set_xlabel('Year', fontsize=12)
+ax.set_ylabel('Tonnes of Food per Person', fontsize=12)
+ax.set_title('Food Produced per Person Over Time', fontsize=14, fontweight='bold')
 
-
-
-ax1.set_xlabel('Year')
-ax1.set_ylabel('Population (Billions)', color='black')
-ax1.tick_params(axis='y', labelcolor='black')
-ax1.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.1f}B'))
-
-ax2 = ax1.twinx()
-ax2.plot(China['Year'], China['Total Food'] / 1e9, color='blue', linestyle='--', label='China Production', linewidth=2)
-ax2.plot(India['Year'], India['Total Food'] / 1e9, color='red', linestyle='--', label='India Production', linewidth=2)
-ax2.plot(United_States['Year'], United_States['Total Food'] / 1e9, color='green', linestyle='--', label='USA Production', linewidth=2)
-ax2.plot(Afghanistan['Year'], Afghanistan['Total Food'] / 1e9, color='purple', linestyle='--', label='Afghanistan Production', linewidth=2)
+ax.grid(True, linestyle='--', alpha=0.6)
+ax.tick_params(axis='x', rotation=45)
+ax.tick_params(axis='both', labelsize=10)
 
 
-ax2.set_ylabel('Food Production (Billions of Tonnes)', color='black')
-ax2.tick_params(axis='y', labelcolor='black')
-ax2.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x:.1f}B'))
-
-lines_1, labels_1 = ax1.get_legend_handles_labels()
-lines_2, labels_2 = ax2.get_legend_handles_labels()
-fig.legend(lines_1 + lines_2, labels_1 + labels_2, loc='center left', bbox_to_anchor=(1, 0.5))
-
-plt.title('Population and Food Production Over Time by Country')
-
+fig.legend(bbox_to_anchor=(1.15, 0.6))
 
 plt.tight_layout()
-
-plt.title('Population and Food Production Over Time by Country')
-
